@@ -52,15 +52,53 @@ const Dashboard: React.FC<Props> = ({ transactions, students }) => {
     }).format(val);
   };
 
+  // Koleksi Kata Mutiara (31 Item untuk rotasi bulanan)
   const QUOTES = [
     "Pendidikan adalah senjata paling mematikan di dunia, karena dengan pendidikan Anda dapat mengubah dunia. - Nelson Mandela",
     "Makin banyak yang kamu baca, makin banyak hal yang kamu ketahui. - Dr. Seuss",
     "Gantungkan cita-citamu setinggi langit! Bermimpilah setinggi langit. - Ir. Soekarno",
     "Kegagalan hanya terjadi bila kita menyerah. - B.J. Habibie",
-    "Ilmu itu ada dua: ilmu yang memberi manfaat dan ilmu yang sekedar dihafal."
+    "Ilmu itu ada dua: ilmu yang memberi manfaat dan ilmu yang sekedar dihafal.",
+    "Barang siapa tidak mau merasakan pahitnya belajar, ia akan merasakan hinanya kebodohan sepanjang hidupnya. - Imam Syafi'i",
+    "Pendidikan bukan persiapan untuk hidup. Pendidikan adalah hidup itu sendiri. - John Dewey",
+    "Orang bijak belajar ketika mereka bisa. Orang bodoh belajar ketika mereka terpaksa.",
+    "Tuntutlah ilmu, tapi tidak melupakan ibadah, dan kerjakanlah ibadah tapi tidak boleh lupa pada ilmu. - Hassan Al Bashri",
+    "Satu-satunya cara untuk melakukan pekerjaan hebat adalah dengan mencintai apa yang kamu lakukan. - Steve Jobs",
+    "Jangan takut salah. Takutlah jika tidak pernah mencoba.",
+    "Buku adalah jendela dunia, dan kuncinya adalah membaca.",
+    "Hormati gurumu, sayangi temanmu, itulah tandanya murid budiman.",
+    "Kebaikan yang kamu tanam hari ini akan kamu tuai di masa depan.",
+    "Disiplin adalah jembatan antara cita-cita dan pencapaian.",
+    "Kejujuran adalah mata uang yang berlaku di mana saja.",
+    "Masa depan dimiliki oleh mereka yang percaya pada keindahan mimpi-mimpi mereka.",
+    "Jadilah seperti padi, kian berisi kian merunduk.",
+    "Usaha tidak akan pernah mengkhianati hasil.",
+    "Kebersihan adalah sebagian dari iman.",
+    "Teman yang baik adalah yang mengajakmu pada kebaikan.",
+    "Waktu itu seperti pedang, jika kau tidak memanfaatkannya, ia akan memotongmu.",
+    "Berbuat baiklah tanpa perlu alasan.",
+    "Kesabaran itu pahit, tapi buahnya manis.",
+    "Senyum adalah sedekah yang paling mudah.",
+    "Jangan menunda pekerjaanmu sampai besok, jika bisa dikerjakan hari ini.",
+    "Rajin pangkal pandai, hemat pangkal kaya.",
+    "Pengalaman adalah guru yang paling berharga.",
+    "Bermimpilah setinggi langit, jika engkau jatuh, engkau akan jatuh di antara bintang-bintang.",
+    "Tidak ada kata terlambat untuk belajar.",
+    "Sukses butuh proses, bukan protes."
   ];
 
-  const randomQuote = useMemo(() => QUOTES[Math.floor(Math.random() * QUOTES.length)], []);
+  // LOGIKA HARIAN: Menggunakan 'Day of Year' agar quote berubah setiap 24 jam
+  // Jadi setiap orang yang membuka aplikasi pada hari yang sama akan melihat quote yang sama.
+  const quoteOfTheDay = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const diff = (now.getTime() - start.getTime()) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+    const oneDay = 1000 * 60 * 60 * 24;
+    const dayOfYear = Math.floor(diff / oneDay);
+
+    // Menggunakan Modulo (%) agar index selalu berputar sesuai jumlah quote
+    return QUOTES[dayOfYear % QUOTES.length];
+  }, []);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -89,7 +127,7 @@ const Dashboard: React.FC<Props> = ({ transactions, students }) => {
                     Kata Mutiara Hari Ini
                   </h3>
                   <p className="text-slate-600 font-medium italic text-lg leading-relaxed">
-                    "{randomQuote}"
+                    "{quoteOfTheDay}"
                   </p>
               </div>
             </div>

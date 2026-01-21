@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Transaction, Student, UserRole } from '../types';
 import * as api from '../services/api';
-import { FileText, TrendingUp, TrendingDown, Filter, User, Eye, X, PieChart, Receipt, Calendar, ArrowUpRight, Pencil, Trash2, Save, Loader2, AlertTriangle } from 'lucide-react';
+import { FileText, TrendingUp, TrendingDown, Filter, User, Eye, X, PieChart, Receipt, Calendar, ArrowUpRight, Pencil, Trash2, Save, Loader2, AlertTriangle, Share2 } from 'lucide-react';
 
 interface Props {
   transactions: Transaction[];
@@ -118,6 +118,15 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
     }
   };
 
+  const handleCopyToWA = () => {
+    const text = `📊 *LAPORAN KAS MIT*\nUpdate: ${new Date().toLocaleDateString('id-ID')}\n\n💰 *Pemasukan:* ${formatCurrency(summary.income)}\n💸 *Pengeluaran:* ${formatCurrency(summary.expense)}\n\n✅ *Saldo Saat Ini:* ${formatCurrency(summary.balance)}\n\nTerima kasih atas partisipasi Ayah & Bunda! 🙏`;
+    navigator.clipboard.writeText(text).then(() => {
+      alert("Laporan berhasil disalin! Silahkan tempel (Paste) di WhatsApp Group.");
+    }).catch(() => {
+      alert("Gagal menyalin otomatis. Silahkan screenshot saja.");
+    });
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-700">
       {/* Loading Overlay */}
@@ -135,6 +144,15 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
           </h1>
           <p className="text-slate-500">Rekapitulasi seluruh dana masuk dan keluar kelas MIT.</p>
         </div>
+        
+        {/* Tombol Copy WA */}
+        <button 
+          onClick={handleCopyToWA}
+          className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-100 transition-all active:scale-95 text-sm"
+        >
+          <Share2 size={18} />
+          Salin Laporan ke WA
+        </button>
       </div>
 
       {/* TAB NAVIGATION */}
