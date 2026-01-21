@@ -1,8 +1,10 @@
 {
   "name": "KAS MIT",
   "short_name": "KAS MIT",
-  "description": "Aplikasi pencatatan uang kas kelas MIT",
-  "start_url": "/",
+  "id": "kas-mit-app",
+  "description": "Aplikasi pencatatan uang kas mandiri untuk MIT.",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#fffbeb",
   "theme_color": "#fbbf24",

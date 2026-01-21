@@ -1,5 +1,3 @@
-// /// <reference types="vite/client" />
-
 // Fallback declarations to resolve missing vite/client types
 declare module '*.svg' {
   const content: string;
@@ -51,6 +49,6 @@ interface ImportMetaEnv {
 }
 
 interface ImportMeta {
-  readonly url: string;
+  url: string;
   readonly env: ImportMetaEnv;
 }

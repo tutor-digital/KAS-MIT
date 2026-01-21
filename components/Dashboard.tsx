@@ -159,7 +159,8 @@ const Dashboard: React.FC<Props> = ({ transactions, students }) => {
             <span className="p-1.5 bg-blue-50 text-blue-600 rounded-lg"><PlusCircle size={18}/></span>
             Statistik Iuran (6 Bln Terakhir)
           </h3>
-          <div className="h-64 w-full">
+          {/* PERBAIKAN: Menambahkan style fix height untuk mencegah warning width(-1) */}
+          <div className="w-full" style={{ height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />

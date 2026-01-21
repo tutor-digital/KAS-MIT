@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Transaction } from '../types';
 import * as api from '../services/api';
-import { Save, Upload, Image as ImageIcon, MinusCircle, FileText, Calendar, Loader2 } from 'lucide-react';
+import { Save, Upload, Image as ImageIcon, MinusCircle, FileText, Calendar, Loader2, X } from 'lucide-react';
 
 interface Props {
   onSuccess: (t: Transaction) => void;
@@ -26,6 +26,13 @@ const ExpenseForm: React.FC<Props> = ({ onSuccess }) => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const clearFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAttachmentFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,8 +85,11 @@ const ExpenseForm: React.FC<Props> = ({ onSuccess }) => {
 
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/40 space-y-6 relative">
         {isLoading && (
-          <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center rounded-3xl">
-             <Loader2 className="animate-spin text-rose-500" size={48} />
+          <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center rounded-3xl backdrop-blur-[1px]">
+             <div className="flex flex-col items-center gap-3">
+                <Loader2 className="animate-spin text-rose-500" size={48} />
+                <p className="text-sm font-bold text-rose-500 animate-pulse">Menyimpan data...</p>
+             </div>
           </div>
         )}
 
@@ -133,23 +143,37 @@ const ExpenseForm: React.FC<Props> = ({ onSuccess }) => {
           <div 
             onClick={() => fileInputRef.current?.click()}
             className={`
-              w-full h-40 border-2 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all
-              ${previewUrl ? 'border-emerald-500 bg-emerald-50/20' : 'border-slate-200 bg-slate-50 hover:bg-slate-100'}
+              w-full relative border-2 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden
+              ${previewUrl ? 'h-auto min-h-[200px] border-emerald-500 bg-emerald-50/10' : 'h-48 border-slate-200 bg-slate-50 hover:bg-slate-100'}
             `}
           >
             {previewUrl ? (
-              <div className="relative group">
-                 <img src={previewUrl} alt="Preview" className="h-32 rounded-xl object-cover shadow-md" />
-                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 rounded-xl flex items-center justify-center text-white transition-opacity">
-                    <span className="text-xs font-bold">Ubah Foto</span>
+              <div className="w-full p-2 relative group">
+                 <img 
+                    src={previewUrl} 
+                    alt="Preview" 
+                    className="w-full h-auto max-h-[400px] rounded-2xl object-contain mx-auto shadow-sm" 
+                 />
+                 <button 
+                    onClick={clearFile}
+                    className="absolute top-4 right-4 p-2 bg-rose-500 text-white rounded-full shadow-lg hover:scale-110 transition-transform"
+                    type="button"
+                    title="Hapus foto"
+                 >
+                    <X size={16} />
+                 </button>
+                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-xs backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    Ketuk untuk ganti foto
                  </div>
               </div>
             ) : (
-              <>
-                <Upload className="text-slate-400 mb-2" size={32} />
-                <p className="text-sm font-medium text-slate-500">Ketuk untuk upload foto struk</p>
+              <div className="text-center p-6">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-slate-300">
+                   <Upload size={32} />
+                </div>
+                <p className="text-sm font-bold text-slate-600">Ketuk untuk upload foto struk</p>
                 <p className="text-[10px] text-slate-400 mt-1">Format JPG, PNG (Max 5MB)</p>
-              </>
+              </div>
             )}
           </div>
           <input 

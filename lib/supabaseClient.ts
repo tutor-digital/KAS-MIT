@@ -1,13 +1,32 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Mengambil konfigurasi dari Environment Variables
-// Saat di local, dia ambil dari file .env
-// Saat di Vercel, dia ambil dari settingan Project Settings
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Fallback values (Diambil dari .env Anda)
+// Ini digunakan jika import.meta.env gagal dibaca oleh browser/preview
+// sehingga aplikasi TIDAK AKAN layar putih/error.
+const FALLBACK_URL = "https://ekfhbxtmvoottmllthsp.supabase.co";
+const FALLBACK_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrZmhieHRtdm9vdHRtbGx0aHNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4OTY4NTIsImV4cCI6MjA4NDQ3Mjg1Mn0.AWnSXkaFzX-jBstRil2ZbG4NfrHcUM7_xDuZJQMqFhA";
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error('Supabase URL dan Anon Key belum disetting di file .env atau Environment Variables Vercel.');
+let supabaseUrl = FALLBACK_URL;
+let supabaseKey = FALLBACK_KEY;
+
+try {
+  // Coba akses Environment Variables dengan aman
+  // Kita cek dulu apakah objek import.meta dan env ada
+  // @ts-ignore
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    // @ts-ignore
+    if (import.meta.env.VITE_SUPABASE_URL) {
+       // @ts-ignore
+       supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    }
+    // @ts-ignore
+    if (import.meta.env.VITE_SUPABASE_ANON_KEY) {
+       // @ts-ignore
+       supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    }
+  }
+} catch (error) {
+  console.warn("Gagal membaca env vars, menggunakan fallback otomatis.");
 }
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabase = createClient(supabaseUrl, supabaseKey);

@@ -122,7 +122,7 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
     <div className="space-y-6 animate-in fade-in duration-700">
       {/* Loading Overlay */}
       {isLoading && (
-         <div className="fixed inset-0 bg-white/50 z-50 flex items-center justify-center backdrop-blur-sm">
+         <div className="fixed inset-0 bg-white/50 z-[100] flex items-center justify-center backdrop-blur-sm">
             <Loader2 className="animate-spin text-blue-500" size={48} />
          </div>
       )}
@@ -384,7 +384,7 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
 
       {/* EDIT MODAL */}
       {editingTransaction && (
-         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+         <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
            <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -476,15 +476,15 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
       {/* IMAGE MODAL */}
       {showImage && (
         <div 
-          className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 animate-in fade-in duration-200"
           onClick={() => setShowImage(null)}
         >
           <div className="max-w-3xl w-full bg-white rounded-3xl overflow-hidden relative shadow-2xl animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <button className="absolute top-4 right-4 p-2 bg-black/10 hover:bg-black/20 rounded-full text-slate-800 transition-all z-10" onClick={() => setShowImage(null)}>
               <X size={20} />
             </button>
-            <div className="p-2 bg-slate-100">
-              <img src={showImage} alt="Lampiran" className="w-full max-h-[70vh] object-contain mx-auto rounded-2xl" />
+            <div className="p-2 bg-slate-100 max-h-[75vh] overflow-auto flex justify-center">
+              <img src={showImage} alt="Lampiran" className="w-auto h-auto max-w-full object-contain rounded-2xl" />
             </div>
             <div className="p-6 text-center bg-white">
               <h3 className="text-lg font-bold text-slate-800 flex items-center justify-center gap-2">
