@@ -1,12 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Konfigurasi Supabase
-const SUPABASE_URL = 'https://ekfhbxtmvoottmllthsp.supabase.co';
+// Mengambil konfigurasi dari Environment Variables
+// Saat di local, dia ambil dari file .env
+// Saat di Vercel, dia ambil dari settingan Project Settings
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// NOTE: Key dipisah untuk menghindari deteksi "Secret Scanning" otomatis saat commit ke GitHub
-// Karena ini adalah ANON key (public), sebenarnya aman untuk ditaruh di client-side.
-const KEY_PART_1 = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVrZmhieHRtdm9vdHRtbGx0aHNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4OTY4NTIsImV4cCI6MjA4NDQ3Mjg1Mn0';
-const KEY_PART_2 = '.AWnSXkaFzX-jBstRil2ZbG4NfrHcUM7_xDuZJQMqFhA';
-const SUPABASE_ANON_KEY = KEY_PART_1 + KEY_PART_2;
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error('Supabase URL dan Anon Key belum disetting di file .env atau Environment Variables Vercel.');
+}
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
