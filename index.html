@@ -2,16 +2,21 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>KAS MIT - Manajemen Iuran Terpadu</title>
-    <!-- Ubah href menjadi ./manifest.json -->
+    
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#fbbf24">
+    
+    <!-- Android & Chrome Capable -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="KAS MIT">
     
     <!-- iOS Support -->
     <link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/bottts/png?seed=MITApp&backgroundColor=fbbf24&scale=90">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-touch-fullscreen" content="yes">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,6 +28,8 @@
             background-color: #fffbeb; /* Warna cream hangat */
             margin: 0;
             color: #1e293b;
+            /* Mencegah pull-to-refresh pada mobile agar terasa seperti app */
+            overscroll-behavior-y: none;
         }
         .font-kids {
             font-family: 'Quicksand', sans-serif;
