@@ -1,8 +1,8 @@
 // Service Worker Name
-const CACHE_NAME = 'kas-mit-v4';
+const CACHE_NAME = 'kas-mit-v5';
 
 // Files to cache
-// Kita cache index.html secara eksplisit
+// Kita cache root ./ dan index.html untuk keamanan ganda
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -39,7 +39,6 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // 1. IGNORE EXTERNAL API (Supabase, Dicebear, dll)
-  // Biarkan browser handle network langsung (Network Only)
   if (url.hostname.includes('supabase.co') || 
       url.hostname.includes('dicebear.com') ||
       url.protocol.startsWith('chrome-extension')) {
@@ -48,13 +47,21 @@ self.addEventListener('fetch', (event) => {
 
   // 2. NAVIGATION REQUEST (Saat user membuka app/refresh halaman)
   // STRATEGI: Cache First, Fallback to Network
-  // PENTING: Selalu kembalikan index.html untuk navigasi agar SPA jalan
+  // PENTING: Untuk SPA, semua navigasi halaman harus mereturn index.html
   if (event.request.mode === 'navigate') {
     event.respondWith(
       caches.match('./index.html').then((response) => {
-        return response || fetch(event.request).catch(() => {
-           // Jika offline dan index.html entah kenapa hilang, coba root ./
-           return caches.match('./');
+        // Coba return index.html dari cache
+        if (response) return response;
+        
+        // Jika tidak ada, coba root ./ (karena kadang server menganggapnya sama)
+        return caches.match('./').then((rootResponse) => {
+           if (rootResponse) return rootResponse;
+
+           // Jika cache kosong, ambil dari network
+           return fetch(event.request).catch(() => {
+              // Jika offline total dan cache tidak ada, browser akan menampilkan offline page bawaan
+           });
         });
       })
     );
@@ -63,7 +70,6 @@ self.addEventListener('fetch', (event) => {
 
   // 3. ASSET REQUEST (JS, CSS, Images, Manifest)
   // STRATEGI: Stale-While-Revalidate
-  // Ambil dari cache dulu biar cepat, lalu update cache di background
   if (event.request.method === 'GET') {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
@@ -77,7 +83,7 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         }).catch(() => {
-           // Network gagal, tidak apa-apa jika ada cache
+           // Network gagal, gunakan cache yang ada
         });
 
         return cachedResponse || fetchPromise;

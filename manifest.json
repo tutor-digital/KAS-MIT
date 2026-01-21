@@ -3,7 +3,7 @@
   "short_name": "KAS MIT",
   "id": "kas-mit-app",
   "description": "Aplikasi pencatatan uang kas mandiri untuk MIT.",
-  "start_url": "./index.html",
+  "start_url": ".",
   "scope": "./",
   "display": "standalone",
   "background_color": "#fffbeb",
