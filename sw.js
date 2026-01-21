@@ -1,8 +1,8 @@
 // Service Worker Name
-const CACHE_NAME = 'kas-mit-v2';
+const CACHE_NAME = 'kas-mit-v3';
 
 // Files to cache
-// PENTING: Gunakan path relatif (./) agar cocok dengan vite.config.ts base: './'
+// Gunakan path relatif
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -38,16 +38,36 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   
-  // Abaikan request ke chrome-extension atau skema non-http
-  if (!event.request.url.startsWith('http')) return;
+  const url = new URL(event.request.url);
 
+  // STRATEGI: NETWORK ONLY (JANGAN CACHE)
+  // 1. Request ke Supabase (Database)
+  // 2. Request ke Dicebear (Avatar)
+  // 3. Request ke Chrome Extension (Environment)
+  if (url.hostname.includes('supabase.co') || 
+      url.hostname.includes('dicebear.com') ||
+      url.protocol.startsWith('chrome-extension')) {
+    return; // Biarkan browser handle network langsung
+  }
+
+  // STRATEGI: STALE-WHILE-REVALIDATE (Untuk Aset App)
+  // Coba ambil dari cache dulu, tapi tetap update cache di background
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        return response;
-      })
-      .catch(() => {
-        return caches.match(event.request);
-      })
+    caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        // Update cache dengan versi terbaru
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, responseToCache);
+            });
+        }
+        return networkResponse;
+      }).catch(() => {
+         // Jika offline dan fetch gagal, tidak apa-apa jika sudah ada cachedResponse
+      });
+
+      return cachedResponse || fetchPromise;
+    })
   );
 });

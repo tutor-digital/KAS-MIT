@@ -19,7 +19,10 @@ import {
   AlertCircle,
   LogOut,
   Loader2,
-  Smartphone
+  Smartphone,
+  Share,
+  PlusSquare,
+  HelpCircle
 } from 'lucide-react';
 import { Student, Transaction, ViewType, UserRole } from './types';
 import Dashboard from './components/Dashboard';
@@ -41,7 +44,7 @@ const App: React.FC = () => {
   
   // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallBtn, setShowInstallBtn] = useState(false);
+  const [showInstallHelp, setShowInstallHelp] = useState(false);
   
   // Auth States with Persistence
   const [userRole, setUserRole] = useState<UserRole>(() => {
@@ -64,20 +67,26 @@ const App: React.FC = () => {
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setShowInstallBtn(true);
+      // Kita tidak menggunakan showInstallBtn boolean lagi, 
+      // karena kita ingin tombol selalu ada (sebagai trigger install atau trigger bantuan)
     };
     window.addEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setShowInstallBtn(false);
+    if (deferredPrompt) {
+      // Jika browser mendukung install otomatis (Android/Chrome Desktop)
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      // Jika browser tidak mendukung install otomatis (iOS / Safari / Sudah Terinstall)
+      // Tampilkan Modal Bantuan
+      setShowInstallHelp(true);
     }
-    setDeferredPrompt(null);
   };
 
   // Load Data from Supabase
@@ -225,15 +234,14 @@ const App: React.FC = () => {
 
         {/* Install App Button & Role Switcher */}
         <div className="px-4 pb-4 space-y-3">
-          {showInstallBtn && (
-            <button 
-              onClick={handleInstallClick}
-              className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 transition-all animate-pulse"
-            >
-              <Smartphone size={18} />
-              Install Aplikasi
-            </button>
-          )}
+          {/* Tombol Install selalu muncul */}
+          <button 
+            onClick={handleInstallClick}
+            className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-200 transition-all active:scale-95"
+          >
+            <Smartphone size={18} />
+            Install Aplikasi
+          </button>
 
           <div className="p-6 bg-slate-50/80 rounded-[2rem] border-2 border-slate-100">
             <div className="flex items-center gap-3 mb-4">
@@ -353,6 +361,72 @@ const App: React.FC = () => {
                 Masuk Sekarang
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* INSTALL HELP MODAL (PANDUAN INSTALL MANUAL) */}
+      {showInstallHelp && (
+        <div 
+          className="fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300"
+          onClick={() => setShowInstallHelp(false)}
+        >
+          <div 
+            className="bg-white w-full max-w-md rounded-[2rem] p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-300 relative"
+            onClick={e => e.stopPropagation()}
+          >
+            <button 
+              onClick={() => setShowInstallHelp(false)}
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <X size={24} />
+            </button>
+
+            <div className="text-center mb-6">
+               <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Smartphone size={32} />
+               </div>
+               <h3 className="text-xl font-bold text-slate-800 mb-2">Cara Install Aplikasi</h3>
+               <p className="text-slate-500 text-sm">Aplikasi ini bisa dipasang di HP tanpa download dari PlayStore loh!</p>
+            </div>
+
+            <div className="space-y-4">
+               {/* iOS Instruction */}
+               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex gap-4 items-start">
+                  <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 shrink-0">
+                    <Share size={20} className="text-blue-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">Pengguna iPhone (iOS)</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      1. Tekan tombol <strong>Share</strong> di Safari (bawah tengah).<br/>
+                      2. Geser ke bawah, pilih <strong>"Add to Home Screen"</strong>.<br/>
+                      3. Tekan <strong>Add</strong> di pojok kanan atas.
+                    </p>
+                  </div>
+               </div>
+
+               {/* Android Instruction */}
+               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex gap-4 items-start">
+                  <div className="p-2 bg-white rounded-xl shadow-sm border border-slate-100 shrink-0">
+                    <Menu size={20} className="text-emerald-500" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-sm mb-1">Pengguna Android (Chrome)</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      1. Tekan tombol <strong>Menu (titik tiga)</strong> di pojok kanan atas.<br/>
+                      2. Pilih <strong>"Install App"</strong> atau <strong>"Tambahkan ke Layar Utama"</strong>.
+                    </p>
+                  </div>
+               </div>
+            </div>
+
+            <button 
+              onClick={() => setShowInstallHelp(false)}
+              className="w-full mt-6 bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-xl font-bold"
+            >
+              Saya Mengerti
+            </button>
           </div>
         </div>
       )}
