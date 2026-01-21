@@ -1,0 +1,7 @@
+{
+  "name": "KAS MIT",
+  "description": "Aplikasi pencatatan uang kas mandiri untuk MIT dengan fitur multi-bulan, laporan detail, dan ceklis iuran untuk wali murid.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
