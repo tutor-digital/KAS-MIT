@@ -1,8 +1,8 @@
 // Service Worker Name
-const CACHE_NAME = 'kas-mit-v3';
+const CACHE_NAME = 'kas-mit-v4';
 
 // Files to cache
-// Gunakan path relatif
+// Kita cache index.html secara eksplisit
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -36,38 +36,52 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  
   const url = new URL(event.request.url);
 
-  // STRATEGI: NETWORK ONLY (JANGAN CACHE)
-  // 1. Request ke Supabase (Database)
-  // 2. Request ke Dicebear (Avatar)
-  // 3. Request ke Chrome Extension (Environment)
+  // 1. IGNORE EXTERNAL API (Supabase, Dicebear, dll)
+  // Biarkan browser handle network langsung (Network Only)
   if (url.hostname.includes('supabase.co') || 
       url.hostname.includes('dicebear.com') ||
       url.protocol.startsWith('chrome-extension')) {
-    return; // Biarkan browser handle network langsung
+    return;
   }
 
-  // STRATEGI: STALE-WHILE-REVALIDATE (Untuk Aset App)
-  // Coba ambil dari cache dulu, tapi tetap update cache di background
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        // Update cache dengan versi terbaru
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-                cache.put(event.request, responseToCache);
-            });
-        }
-        return networkResponse;
-      }).catch(() => {
-         // Jika offline dan fetch gagal, tidak apa-apa jika sudah ada cachedResponse
-      });
+  // 2. NAVIGATION REQUEST (Saat user membuka app/refresh halaman)
+  // STRATEGI: Cache First, Fallback to Network
+  // PENTING: Selalu kembalikan index.html untuk navigasi agar SPA jalan
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('./index.html').then((response) => {
+        return response || fetch(event.request).catch(() => {
+           // Jika offline dan index.html entah kenapa hilang, coba root ./
+           return caches.match('./');
+        });
+      })
+    );
+    return;
+  }
 
-      return cachedResponse || fetchPromise;
-    })
-  );
+  // 3. ASSET REQUEST (JS, CSS, Images, Manifest)
+  // STRATEGI: Stale-While-Revalidate
+  // Ambil dari cache dulu biar cepat, lalu update cache di background
+  if (event.request.method === 'GET') {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          // Hanya cache jika sukses
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+              const responseToCache = networkResponse.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                  cache.put(event.request, responseToCache);
+              });
+          }
+          return networkResponse;
+        }).catch(() => {
+           // Network gagal, tidak apa-apa jika ada cache
+        });
+
+        return cachedResponse || fetchPromise;
+      })
+    );
+  }
 });
