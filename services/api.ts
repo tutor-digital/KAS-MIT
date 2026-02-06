@@ -30,30 +30,35 @@ export const getStudents = async (): Promise<Student[]> => {
     name: s.name,
     gender: s.gender,
     absentNumber: s.absent_number,
-    // Mapping field baru
-    nickname: s.nickname,
-    password: s.password,
-    birthDate: s.birth_date,
-    weight: s.weight,
-    height: s.height,
-    photoUrl: s.photo_url
+    // Mapping field baru (handle null values)
+    nickname: s.nickname || '',
+    password: s.password || '',
+    birthDate: s.birth_date || '',
+    weight: s.weight || 0,
+    height: s.height || 0,
+    photoUrl: s.photo_url || ''
   }));
 };
 
 export const addStudent = async (student: Student) => {
+  // Pastikan field optional dikirim sebagai null jika undefined/kosong
   const { error } = await supabase.from('students').insert({
     id: student.id,
     name: student.name,
     gender: student.gender,
     absent_number: student.absentNumber,
-    nickname: student.nickname,
+    nickname: student.nickname || null,
     password: student.password || '123456',
-    birth_date: student.birthDate,
-    weight: student.weight,
-    height: student.height,
-    photo_url: student.photoUrl
+    birth_date: student.birthDate || null,
+    weight: student.weight || null,
+    height: student.height || null,
+    photo_url: student.photoUrl || null
   });
-  if (error) throw error;
+  
+  if (error) {
+      console.error("Error adding student:", error);
+      throw error;
+  }
 };
 
 export const updateStudent = async (student: Student) => {
@@ -61,14 +66,18 @@ export const updateStudent = async (student: Student) => {
     name: student.name,
     gender: student.gender,
     absent_number: student.absentNumber,
-    nickname: student.nickname,
+    nickname: student.nickname || null,
     password: student.password,
-    birth_date: student.birthDate,
-    weight: student.weight,
-    height: student.height,
-    photo_url: student.photoUrl
+    birth_date: student.birthDate || null,
+    weight: student.weight || null,
+    height: student.height || null,
+    photo_url: student.photoUrl || null
   }).eq('id', student.id);
-  if (error) throw error;
+  
+  if (error) {
+      console.error("Error updating student:", error);
+      throw error;
+  }
 };
 
 export const deleteStudent = async (id: string) => {
@@ -143,7 +152,10 @@ export const deleteTransaction = async (id: string) => {
 // --- STORAGE ---
 
 export const uploadAttachment = async (file: File): Promise<string | null> => {
-  const fileName = `${Date.now()}-${file.name.replace(/\s/g, '')}`;
+  // Validasi nama file agar aman
+  const cleanName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+  const fileName = `${Date.now()}-${cleanName}`;
+  
   const { data, error } = await supabase.storage
     .from('attachments')
     .upload(fileName, file);
