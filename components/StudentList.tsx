@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Student, UserRole } from '../types';
 import * as api from '../services/api';
-import { UserPlus, Search, Trash2, Pencil, Eye, User, Loader2 } from 'lucide-react';
+import { UserPlus, Search, Trash2, Pencil, Eye, User, Loader2, Weight, Ruler } from 'lucide-react';
 import StudentProfile from './StudentProfile';
 
 interface Props {
@@ -141,28 +141,42 @@ const StudentList: React.FC<Props> = ({ students, onRefresh, isAdmin, userRole }
                 onClick={() => (isAdmin || isTeacher) && setViewingStudent(s)}
                 className={`bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm transition-all ${isAdmin || isTeacher ? 'cursor-pointer hover:border-emerald-300 hover:shadow-md' : ''}`}
             >
-                <div className="flex items-center gap-4">
-                    <span className="text-xs font-bold text-slate-300 w-4">{idx + 1}</span>
-                    <img src={getAvatar(s)} className="w-10 h-10 rounded-full bg-slate-100 object-cover" />
-                    <div>
-                        <h4 className="font-bold text-slate-800 text-sm">{s.name}</h4>
-                        <div className="flex items-center gap-2">
+                <div className="flex items-center gap-4 flex-1">
+                    <span className="text-xs font-bold text-slate-300 w-4 shrink-0">{idx + 1}</span>
+                    <img src={getAvatar(s)} className="w-10 h-10 rounded-full bg-slate-100 object-cover shrink-0" />
+                    <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-slate-800 text-sm truncate">{s.name}</h4>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
                             {s.nickname && (
-                                <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500">
+                                <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500 border border-slate-200">
                                     @{s.nickname}
                                 </span>
                             )}
+                            
                             {s.gender === 'L' ? (
-                                <span className="text-[10px] text-blue-500 font-bold">Laki-laki</span>
+                                <span className="text-[10px] bg-blue-50 px-2 py-0.5 rounded text-blue-600 border border-blue-100 font-bold">Laki-laki</span>
                             ) : (
-                                <span className="text-[10px] text-pink-500 font-bold">Perempuan</span>
+                                <span className="text-[10px] bg-pink-50 px-2 py-0.5 rounded text-pink-600 border border-pink-100 font-bold">Perempuan</span>
                             )}
+
+                            {/* INFORMASI BERAT & TINGGI BADAN */}
+                            {s.weight ? (
+                                <span className="text-[10px] bg-amber-50 px-2 py-0.5 rounded text-amber-600 border border-amber-100 font-bold flex items-center gap-1">
+                                    <Weight size={10} /> {s.weight} kg
+                                </span>
+                            ) : null}
+                            
+                            {s.height ? (
+                                <span className="text-[10px] bg-violet-50 px-2 py-0.5 rounded text-violet-600 border border-violet-100 font-bold flex items-center gap-1">
+                                    <Ruler size={10} /> {s.height} cm
+                                </span>
+                            ) : null}
                         </div>
                     </div>
                 </div>
                 
                 {/* ACTIONS */}
-                <div className="flex gap-2">
+                <div className="flex gap-2 ml-2">
                     {(isAdmin || isTeacher) && (
                         <button 
                             className={`p-2 rounded-lg ${isAdmin ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}

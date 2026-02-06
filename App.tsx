@@ -14,7 +14,10 @@ import {
   Wallet,
   Bell,
   ShieldCheck,
-  GraduationCap
+  GraduationCap,
+  Cake,
+  Baby,
+  ArrowRight
 } from 'lucide-react';
 import { Student, Transaction, ViewType, UserRole } from './types';
 import Dashboard from './components/Dashboard';
@@ -244,7 +247,18 @@ const App: React.FC = () => {
          return <MonthlyChecklist transactions={transactions} students={students} />;
       case 'PROFILE': 
         if (isAdmin || isTeacher) {
-            // Updated Padding to pb-40 to avoid bottom nav overlap
+            // DATA STATISTIK UNTUK PROFIL KELAS
+            const boyCount = students.filter(s => s.gender === 'L').length;
+            const girlCount = students.filter(s => s.gender === 'P').length;
+            
+            // Cek Ulang Tahun Bulan Ini
+            const currentMonth = new Date().getMonth(); // 0-11
+            const birthdayStudents = students.filter(s => {
+                if (!s.birthDate) return false;
+                const bd = new Date(s.birthDate);
+                return bd.getMonth() === currentMonth;
+            });
+
             return (
                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-500 pb-40">
                     <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm text-center mt-10 relative overflow-hidden">
@@ -254,20 +268,79 @@ const App: React.FC = () => {
                                 {isAdmin ? <ShieldCheck size={40} /> : <GraduationCap size={40} />}
                             </div>
                             <h2 className="text-2xl font-bold text-slate-800">{isAdmin ? 'Administrator' : 'Wali Kelas'}</h2>
-                            <p className="text-slate-500 text-sm font-medium">{isAdmin ? 'Pengelola Keuangan Kelas' : 'Pemantau Aktivitas Siswa'}</p>
+                            <p className="text-slate-500 text-sm font-medium">Profil & Statistik Kelas</p>
                         </div>
                     </div>
                     
-                    <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm space-y-4">
-                         <h3 className="font-bold text-slate-800">Informasi Akun</h3>
-                         <p className="text-sm text-slate-500">
-                             {isAdmin 
-                                ? 'Anda memiliki akses penuh untuk mengelola data siswa dan transaksi keuangan.' 
-                                : 'Anda masuk dalam mode "Lihat Saja" (Read Only). Anda dapat melihat data profil siswa, namun tidak dapat mengubahnya.'}
-                         </p>
-                         <div className="p-4 bg-blue-50 text-blue-700 rounded-xl text-xs font-medium">
-                            Tips: Gunakan menu <strong>Siswa</strong> untuk melihat detail data anak didik.
+                    {/* STATISTIK RINGKAS */}
+                    <div className="grid grid-cols-3 gap-3">
+                         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center">
+                            <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-2">
+                                <Users size={16} />
+                            </div>
+                            <span className="text-2xl font-bold text-slate-800">{students.length}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">Total Siswa</span>
                          </div>
+                         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center">
+                            <div className="w-8 h-8 rounded-full bg-sky-50 text-sky-500 flex items-center justify-center mb-2">
+                                <Baby size={16} />
+                            </div>
+                            <span className="text-2xl font-bold text-slate-800">{boyCount}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">Laki-Laki</span>
+                         </div>
+                         <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center">
+                            <div className="w-8 h-8 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center mb-2">
+                                <Baby size={16} />
+                            </div>
+                            <span className="text-2xl font-bold text-slate-800">{girlCount}</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase">Perempuan</span>
+                         </div>
+                    </div>
+
+                    {/* BIRTHDAY SECTION */}
+                    <div className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm">
+                         <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
+                            <Cake className="text-rose-400" size={20} />
+                            Ulang Tahun Bulan Ini
+                         </h3>
+                         
+                         {birthdayStudents.length > 0 ? (
+                            <div className="space-y-3">
+                                {birthdayStudents.map(s => {
+                                    const bd = new Date(s.birthDate!);
+                                    return (
+                                        <div key={s.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
+                                            <div className="w-10 h-10 rounded-full bg-white border border-slate-100 overflow-hidden">
+                                                <img src={s.photoUrl || `https://api.dicebear.com/7.x/micah/svg?seed=${s.name}`} alt={s.name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div>
+                                                <p className="font-bold text-slate-700 text-sm">{s.name}</p>
+                                                <p className="text-xs text-rose-500 font-bold flex items-center gap-1">
+                                                    <Cake size={10} /> {bd.getDate()} {new Intl.DateTimeFormat('id-ID', { month: 'long' }).format(bd)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                         ) : (
+                             <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                 Tidak ada siswa yang berulang tahun bulan ini.
+                             </div>
+                         )}
+                    </div>
+
+                    <div className="bg-blue-50 rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => setCurrentView('STUDENTS')}>
+                        <div className="flex items-center gap-3">
+                             <div className="p-2 bg-white rounded-xl text-blue-500">
+                                <Users size={20} />
+                             </div>
+                             <div>
+                                <p className="font-bold text-blue-800 text-sm">Kelola Data Siswa</p>
+                                <p className="text-xs text-blue-600">Lihat daftar lengkap & edit</p>
+                             </div>
+                        </div>
+                        <ArrowRight size={18} className="text-blue-400" />
                     </div>
 
                     <button 
@@ -356,7 +429,7 @@ const App: React.FC = () => {
             className={`flex flex-col items-center gap-1 p-2 transition-all ${currentView === 'PROFILE' ? 'text-lime-400 -translate-y-1' : 'hover:text-white'}`}
           >
             <User size={24} fill={currentView === 'PROFILE' ? "currentColor" : "none"} />
-            <span className="text-[10px] font-bold">Akun Profil</span>
+            <span className="text-[10px] font-bold">Profil Kelas</span>
           </button>
         </div>
       );
