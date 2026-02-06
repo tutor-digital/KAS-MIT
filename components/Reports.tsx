@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Transaction, Student, UserRole } from '../types';
 import * as api from '../services/api';
-import { FileText, TrendingUp, TrendingDown, Filter, User, Eye, X, PieChart, Receipt, Calendar, ArrowUpRight, Pencil, Trash2, Save, Loader2, AlertTriangle, Share2 } from 'lucide-react';
+import { FileText, TrendingUp, TrendingDown, Filter, User, Eye, X, PieChart, Receipt, Calendar, ArrowUpRight, Pencil, Trash2, Save, Loader2, AlertTriangle, Share2, Wallet } from 'lucide-react';
 
 interface Props {
   transactions: Transaction[];
@@ -128,7 +128,7 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700">
+    <div className="space-y-6 animate-in fade-in duration-700 w-full">
       {/* Loading Overlay */}
       {isLoading && (
          <div className="fixed inset-0 bg-white/50 z-[100] flex items-center justify-center backdrop-blur-sm">
@@ -136,96 +136,96 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
          </div>
       )}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-kids font-bold text-slate-800 flex items-center gap-3">
-             <div className="p-2 bg-blue-50 text-blue-600 rounded-xl"><FileText size={24}/></div>
-             Laporan Keuangan MIT
-          </h1>
-          <p className="text-slate-500">Rekapitulasi seluruh dana masuk dan keluar kelas MIT.</p>
+      <div className="flex flex-col gap-4">
+        <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-kids font-bold text-slate-800 flex items-center gap-3">
+                 <div className="p-2 bg-blue-50 text-blue-600 rounded-xl"><FileText size={24}/></div>
+                 Laporan
+              </h1>
+              <p className="text-slate-500 text-sm mt-1">Rekapitulasi dana masuk & keluar.</p>
+            </div>
+            
+            {/* Tombol Copy WA */}
+            <button 
+              onClick={handleCopyToWA}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white p-3 rounded-xl font-bold shadow-lg shadow-emerald-100 transition-all active:scale-95"
+              title="Salin ke WA"
+            >
+              <Share2 size={20} />
+            </button>
         </div>
-        
-        {/* Tombol Copy WA */}
-        <button 
-          onClick={handleCopyToWA}
-          className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-emerald-100 transition-all active:scale-95 text-sm"
-        >
-          <Share2 size={18} />
-          Salin Laporan ke WA
-        </button>
       </div>
 
-      {/* TAB NAVIGATION */}
-      <div className="flex p-1.5 bg-slate-100 rounded-2xl w-full md:w-fit">
+      {/* TAB NAVIGATION - FULL WIDTH */}
+      <div className="flex p-1.5 bg-slate-100 rounded-2xl w-full">
         <button
           onClick={() => setActiveTab('GENERAL')}
-          className={`flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'GENERAL' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          className={`flex-1 px-2 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'GENERAL' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
           <PieChart size={16} />
-          Rekapitulasi Umum
+          <span className="truncate">Rekap Umum</span>
         </button>
         <button
           onClick={() => setActiveTab('EXPENSE')}
-          className={`flex-1 md:flex-none px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'EXPENSE' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          className={`flex-1 px-2 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${activeTab === 'EXPENSE' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
         >
           <Receipt size={16} />
-          Detail Pengeluaran
+          <span className="truncate">Pengeluaran</span>
         </button>
       </div>
 
       {activeTab === 'GENERAL' ? (
         // --- GENERAL VIEW ---
-        <div className="space-y-6 animate-in slide-in-from-left-4 duration-300">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Total Pemasukan</p>
-              <div className="flex items-center gap-2 text-emerald-600 font-bold text-lg">
-                 <TrendingUp size={20} />
-                 {formatCurrency(summary.income)}
-              </div>
+        <div className="space-y-4 animate-in slide-in-from-left-4 duration-300">
+          <div className="grid grid-cols-1 gap-3">
+            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+               <div>
+                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Total Pemasukan</p>
+                  <div className="text-emerald-600 font-bold text-xl">{formatCurrency(summary.income)}</div>
+               </div>
+               <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><TrendingUp size={24} /></div>
             </div>
-            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Total Pengeluaran</p>
-              <div className="flex items-center gap-2 text-rose-600 font-bold text-lg">
-                 <TrendingDown size={20} />
-                 {formatCurrency(summary.expense)}
-              </div>
+            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+               <div>
+                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Total Pengeluaran</p>
+                  <div className="text-rose-600 font-bold text-xl">{formatCurrency(summary.expense)}</div>
+               </div>
+               <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl"><TrendingDown size={24} /></div>
             </div>
-            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Sisa Dana Kas</p>
-              <div className="flex items-center gap-2 text-blue-600 font-bold text-lg">
-                 <TrendingUp size={20} />
-                 {formatCurrency(summary.balance)}
-              </div>
+            <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center justify-between">
+               <div>
+                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Sisa Dana Kas</p>
+                  <div className="text-blue-600 font-bold text-xl">{formatCurrency(summary.balance)}</div>
+               </div>
+               <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><Wallet size={24} /></div>
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-wrap gap-4 items-center">
+          <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm flex flex-col gap-3">
             <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
-              <Filter size={16} /> Filter:
+              <Filter size={16} /> Filter Data:
             </div>
             
-            <div className="flex-1 min-w-[200px]">
-              <select 
-                value={filterStudent}
-                onChange={(e) => setFilterStudent(e.target.value)}
-                className="w-full text-sm px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500/10 bg-white"
-              >
-                <option value="ALL">Semua Siswa</option>
-                {students.sort((a,b)=>a.name.localeCompare(b.name)).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
+            <div className="grid grid-cols-2 gap-2">
+                <select 
+                    value={filterStudent}
+                    onChange={(e) => setFilterStudent(e.target.value)}
+                    className="w-full text-sm px-3 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500/10 bg-white"
+                >
+                    <option value="ALL">Semua Siswa</option>
+                    {students.sort((a,b)=>a.name.localeCompare(b.name)).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
 
-            <div className="min-w-[150px]">
-              <select 
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value as any)}
-                className="w-full text-sm px-3 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500/10 bg-white"
-              >
-                <option value="ALL">Semua Transaksi</option>
-                <option value="INCOME">Hanya Masuk</option>
-                <option value="EXPENSE">Hanya Keluar</option>
-              </select>
+                <select 
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value as any)}
+                    className="w-full text-sm px-3 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500/10 bg-white"
+                >
+                    <option value="ALL">Semua Tipe</option>
+                    <option value="INCOME">Hanya Masuk</option>
+                    <option value="EXPENSE">Hanya Keluar</option>
+                </select>
             </div>
           </div>
 
@@ -234,69 +234,59 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="bg-slate-50 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-                    <th className="px-6 py-4">Tanggal</th>
-                    <th className="px-6 py-4">Deskripsi Kegiatan</th>
-                    <th className="px-6 py-4">Tipe</th>
-                    <th className="px-6 py-4">Jumlah</th>
-                    <th className="px-6 py-4 text-center">Bukti</th>
-                    {isAdmin && <th className="px-6 py-4 text-right">Aksi</th>}
+                    <th className="px-5 py-4">Tgl</th>
+                    <th className="px-5 py-4">Ket</th>
+                    <th className="px-5 py-4 text-right">Jml</th>
+                    <th className="px-5 py-4 text-center">Img</th>
+                    {isAdmin && <th className="px-5 py-4 text-center">Act</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {filteredData.length === 0 ? (
                     <tr>
-                      <td colSpan={isAdmin ? 6 : 5} className="px-6 py-10 text-center text-slate-400 italic">Belum ada data tersedia.</td>
+                      <td colSpan={isAdmin ? 5 : 4} className="px-6 py-10 text-center text-slate-400 italic">Belum ada data tersedia.</td>
                     </tr>
                   ) : (
                     filteredData.map(t => (
                       <tr key={t.id} className="hover:bg-slate-50/50 transition-colors group">
-                        <td className="px-6 py-4 text-slate-500 whitespace-nowrap">
-                          {new Date(t.date).toLocaleDateString('id-ID')}
+                        <td className="px-5 py-4 text-slate-500 whitespace-nowrap text-xs">
+                          {new Date(t.date).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit'})}
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-slate-700 leading-tight">
+                        <td className="px-5 py-4">
+                          <div className="flex flex-col max-w-[150px]">
+                            <span className="font-bold text-slate-700 leading-tight text-xs truncate">
                                 {t.type === 'INCOME' && t.month && t.year 
-                                    ? `Iuran Kas - ${t.month} ${t.year}` 
+                                    ? `Iuran ${t.month.substring(0,3)}` 
                                     : t.description}
                             </span>
-                            {t.studentId && (
-                              <span className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5">
-                                <User size={10} /> {students.find(s => s.id === t.studentId)?.name}
-                              </span>
-                            )}
+                            <span className="text-[10px] text-slate-400">
+                                {t.type === 'INCOME' ? (students.find(s => s.id === t.studentId)?.name.split(' ')[0] || 'Siswa') : 'Belanja'}
+                            </span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
-                            t.type === 'INCOME' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
-                          }`}>
-                            {t.type === 'INCOME' ? 'Masuk' : 'Keluar'}
-                          </span>
+                        <td className={`px-5 py-4 font-bold whitespace-nowrap text-right text-xs ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                          {t.type === 'INCOME' ? '+' : '-'}{t.amount.toLocaleString('id-ID')}
                         </td>
-                        <td className={`px-6 py-4 font-bold whitespace-nowrap ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          {t.type === 'INCOME' ? '+' : '-'}{formatCurrency(t.amount)}
-                        </td>
-                        <td className="px-6 py-4 text-center">
+                        <td className="px-5 py-4 text-center">
                           {t.attachment ? (
                             <button 
                               onClick={() => setShowImage(t.attachment || null)}
                               className="p-1.5 bg-slate-100 text-slate-500 hover:bg-blue-50 hover:text-blue-500 rounded-lg transition-all"
                             >
-                              <Eye size={16} />
+                              <Eye size={14} />
                             </button>
                           ) : (
                             <span className="text-slate-300">-</span>
                           )}
                         </td>
                         {isAdmin && (
-                          <td className="px-6 py-4 text-right">
-                             <div className="flex items-center justify-end gap-1">
-                                <button onClick={(e) => openEditModal(t, e)} className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
-                                  <Pencil size={16} />
+                          <td className="px-5 py-4 text-center">
+                             <div className="flex items-center justify-center gap-1">
+                                <button onClick={(e) => openEditModal(t, e)} className="p-1.5 text-blue-400 hover:text-blue-600 bg-blue-50 rounded-md" title="Edit">
+                                  <Pencil size={14} />
                                 </button>
-                                <button onClick={(e) => initiateDelete(t.id, e)} className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Hapus">
-                                  <Trash2 size={16} />
+                                <button onClick={(e) => initiateDelete(t.id, e)} className="p-1.5 text-rose-400 hover:text-rose-600 bg-rose-50 rounded-md" title="Hapus">
+                                  <Trash2 size={14} />
                                 </button>
                              </div>
                           </td>
@@ -313,33 +303,28 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
         // --- EXPENSE DETAIL VIEW ---
         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
            {/* Expense Stats */}
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-rose-500 rounded-3xl p-6 text-white shadow-lg shadow-rose-200 relative overflow-hidden">
+           <div className="bg-rose-500 rounded-3xl p-6 text-white shadow-lg shadow-rose-200 relative overflow-hidden">
                <Receipt className="absolute -right-4 -bottom-4 text-rose-400/50 w-32 h-32 -rotate-12" />
                <p className="text-rose-100 text-xs font-bold uppercase tracking-wider mb-1">Total Pengeluaran</p>
                <h3 className="text-2xl font-bold font-kids">{formatCurrency(expenseStats.total)}</h3>
-            </div>
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
-               <div className="flex items-center gap-3 mb-2">
-                 <div className="p-2 bg-orange-50 text-orange-500 rounded-lg"><ArrowUpRight size={18}/></div>
-                 <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Pengeluaran Terbesar</p>
+           </div>
+
+           <div className="grid grid-cols-2 gap-3">
+               <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm">
+                   <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Terbesar</p>
+                   <h3 className="text-sm font-bold text-slate-800 font-kids truncate">{formatCurrency(expenseStats.max)}</h3>
                </div>
-               <h3 className="text-xl font-bold text-slate-800 font-kids">{formatCurrency(expenseStats.max)}</h3>
-            </div>
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
-               <div className="flex items-center gap-3 mb-2">
-                 <div className="p-2 bg-purple-50 text-purple-500 rounded-lg"><Receipt size={18}/></div>
-                 <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Jumlah Transaksi</p>
+               <div className="bg-white rounded-3xl p-4 border border-slate-100 shadow-sm">
+                   <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1">Transaksi</p>
+                   <h3 className="text-sm font-bold text-slate-800 font-kids">{expenseStats.count} <span className="text-[10px] font-normal text-slate-400">kali</span></h3>
                </div>
-               <h3 className="text-xl font-bold text-slate-800 font-kids">{expenseStats.count} <span className="text-sm font-normal text-slate-400">kali</span></h3>
-            </div>
            </div>
 
            {/* Expense List Timeline Style */}
            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
               <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <span className="w-2 h-6 bg-rose-500 rounded-full"></span>
-                Rincian Penggunaan Dana
+                Rincian
               </h3>
               
               <div className="space-y-6 relative before:absolute before:inset-y-0 before:left-[19px] before:w-0.5 before:bg-slate-100">
@@ -364,22 +349,22 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
                             </div>
                          )}
 
-                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                         <div className="flex flex-col gap-3">
                             <div className="flex-1">
                                <div className="flex items-center gap-2 mb-2">
-                                  <span className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-500 flex items-center gap-1.5">
+                                  <span className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-500 flex items-center gap-1.5">
                                     <Calendar size={12} />
-                                    {new Date(t.date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                    {new Date(t.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                                   </span>
                                </div>
-                               <h4 className="text-lg font-bold text-slate-800 mb-1">{t.description}</h4>
-                               <p className="text-rose-600 font-bold text-xl">{formatCurrency(t.amount)}</p>
+                               <h4 className="text-sm font-bold text-slate-800 mb-1 leading-snug">{t.description}</h4>
+                               <p className="text-rose-600 font-bold text-lg">{formatCurrency(t.amount)}</p>
                             </div>
                             
                             {t.attachment && (
-                              <div className="shrink-0">
+                              <div className="shrink-0 w-full">
                                 <div 
-                                  className="w-full md:w-32 h-32 rounded-xl bg-white border border-slate-200 p-1 cursor-pointer overflow-hidden relative group-hover:scale-105 transition-transform"
+                                  className="w-full h-32 rounded-xl bg-white border border-slate-200 p-1 cursor-pointer overflow-hidden relative group-hover:scale-[1.02] transition-transform"
                                   onClick={() => setShowImage(t.attachment || null)}
                                 >
                                   <img src={t.attachment} alt="Bukti" className="w-full h-full object-cover rounded-lg" />
@@ -387,7 +372,6 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
                                     <Eye className="text-white drop-shadow-md" size={24} />
                                   </div>
                                 </div>
-                                <p className="text-[10px] text-center text-slate-400 mt-1 font-medium">Klik untuk perbesar</p>
                               </div>
                             )}
                          </div>
@@ -401,7 +385,7 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
       )}
 
       {/* EDIT MODAL */}
-      {editingTransaction && (
+      {editingTransaction && isAdmin && (
          <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
            <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
               <div className="flex justify-between items-center mb-6">
@@ -456,7 +440,7 @@ const Reports: React.FC<Props> = ({ transactions, students, onRefresh, userRole 
       )}
 
       {/* DELETE MODAL - MAKIN WAH */}
-      {deletingTransactionId && (
+      {deletingTransactionId && isAdmin && (
         <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
            <div className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-rose-500"></div>

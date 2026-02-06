@@ -1,54 +1,56 @@
 import React, { useState } from 'react';
-import { Student } from '../types';
+import { Student, UserRole } from '../types';
 import * as api from '../services/api';
-import { UserPlus, Search, Trash2, GraduationCap, Pencil, X, Save, Loader2, AlertTriangle } from 'lucide-react';
+import { UserPlus, Search, Trash2, Pencil, Eye, User, Loader2 } from 'lucide-react';
+import StudentProfile from './StudentProfile';
 
 interface Props {
   students: Student[];
   onRefresh: () => void;
   isAdmin: boolean;
+  userRole?: UserRole; // Tambahan prop untuk mengetahui role spesifik (Teacher/Admin)
 }
 
-const StudentList: React.FC<Props> = ({ students, onRefresh, isAdmin }) => {
+const StudentList: React.FC<Props> = ({ students, onRefresh, isAdmin, userRole }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [newStudentName, setNewStudentName] = useState('');
-  const [newStudentGender, setNewStudentGender] = useState<'L' | 'P'>('L');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Edit State
-  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editGender, setEditGender] = useState<'L' | 'P'>('L');
+  // State Input Baru (Hanya Admin)
+  const [newName, setNewName] = useState('');
+  const [newNickname, setNewNickname] = useState('');
 
-  // Delete State
+  // View Profile State (Menggantikan Editing Modal lama)
+  const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
+
+  // Delete State (Hanya Admin)
   const [deletingStudentId, setDeletingStudentId] = useState<string | null>(null);
 
-  // Avatar Assets - Menggunakan Style "Micah" yang seperti ilustrasi buku cerita anak
-  const getAvatar = (name: string, gender: 'L' | 'P') => {
-    // Kita gunakan nama sebagai seed agar setiap anak punya wajah uniknya sendiri
-    const seed = name.trim().replace(/\s/g, '') || 'student';
-    // Background color: Biru pastel untuk L, Pink/Peach pastel untuk P
-    const bgColor = gender === 'L' ? 'd1d4f9' : 'ffdfbf'; 
-    return `https://api.dicebear.com/7.x/micah/svg?seed=${seed}&backgroundColor=${bgColor}&baseColor=f9c9b6&mouth=pucker,smile,smirk,laughing&hair=fonze,full,mrT,pixie,turban`;
+  const getAvatar = (s: Student) => {
+    if (s.photoUrl) return s.photoUrl;
+    return `https://api.dicebear.com/7.x/micah/svg?seed=${s.name}&backgroundColor=bbf7d0`;
   };
 
   const handleAdd = async () => {
-    if (!newStudentName.trim()) {
-      alert("Mohon isi nama siswa terlebih dahulu.");
+    if (!newName.trim()) {
+      alert("Nama Lengkap wajib diisi!");
       return;
     }
+    const finalNickname = newNickname.trim() || newName.split(' ')[0].toLowerCase();
+
     setIsLoading(true);
     try {
       const newStudent: Student = {
         id: api.generateUUID(),
-        name: newStudentName,
-        gender: newStudentGender,
+        name: newName,
+        nickname: finalNickname,
+        gender: 'L', // Default L, nanti bisa diedit di profil
+        password: '123456',
         absentNumber: students.length > 0 ? Math.max(...students.map(s => s.absentNumber)) + 1 : 1
       };
       await api.addStudent(newStudent);
       onRefresh();
-      setNewStudentName('');
-      setNewStudentGender('L');
+      setNewName('');
+      setNewNickname('');
     } catch (error) {
       alert("Gagal menambah siswa.");
       console.error(error);
@@ -57,7 +59,8 @@ const StudentList: React.FC<Props> = ({ students, onRefresh, isAdmin }) => {
     }
   };
 
-  const initiateDelete = (id: string) => {
+  const initiateDelete = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Mencegah klik row
     setDeletingStudentId(id);
   };
 
@@ -70,256 +73,149 @@ const StudentList: React.FC<Props> = ({ students, onRefresh, isAdmin }) => {
       setDeletingStudentId(null);
     } catch (error) {
       alert("Gagal menghapus siswa.");
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const openEditModal = (student: Student) => {
-    setEditingStudent(student);
-    setEditName(student.name);
-    setEditGender(student.gender);
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingStudent || !editName.trim()) return;
-    setIsLoading(true);
-    try {
-      const updatedStudent: Student = {
-        ...editingStudent,
-        name: editName,
-        gender: editGender
-      };
-      await api.updateStudent(updatedStudent);
-      onRefresh();
-      setEditingStudent(null);
-    } catch (error) {
-      alert("Gagal update data siswa.");
-      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const filteredStudents = students.filter(s => 
-    s.name.toLowerCase().includes(searchTerm.toLowerCase())
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    (s.nickname && s.nickname.toLowerCase().includes(searchTerm.toLowerCase()))
   ).sort((a, b) => a.absentNumber - b.absentNumber);
 
+  // Apakah user ini Guru?
+  const isTeacher = userRole === 'TEACHER';
+  // Apakah user ini Admin?
+  const isAdministrator = userRole === 'ADMIN';
+
   return (
-    <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-kids font-bold text-slate-800 flex items-center gap-3">
-             <div className="p-2 bg-blue-50 text-blue-600 rounded-xl"><GraduationCap size={24}/></div>
-             Data Siswa MIT
-          </h1>
-          <p className="text-slate-500">Daftar siswa yang terdaftar dalam program kas mandiri MIT.</p>
-        </div>
-        
+    <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 pb-20">
+      
+      {/* HEADER */}
+      <div className="flex flex-col gap-4">
+        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <User className="text-emerald-600" />
+            Daftar Siswa ({filteredStudents.length})
+        </h1>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input 
             type="text" 
             placeholder="Cari nama siswa..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full md:w-64"
+            className="w-full pl-12 pr-4 py-3 rounded-2xl border border-slate-200 bg-white focus:ring-2 focus:ring-emerald-500/20 outline-none"
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden relative">
-        {isLoading && (
-          <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center">
-            <Loader2 className="animate-spin text-blue-500" size={32} />
-          </div>
-        )}
-        
-        {isAdmin && (
-          <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row gap-4 bg-slate-50/50">
-            <div className="flex-1 flex gap-3">
-              <input 
-                type="text" 
-                placeholder="Masukkan Nama Siswa Baru" 
-                value={newStudentName}
-                onChange={(e) => setNewStudentName(e.target.value)}
-                className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              />
-              <select
-                value={newStudentGender}
-                onChange={(e) => setNewStudentGender(e.target.value as 'L' | 'P')}
-                className="w-32 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
-              >
-                <option value="L">Laki-laki</option>
-                <option value="P">Perempuan</option>
-              </select>
-            </div>
-            <button 
-              type="button"
-              onClick={handleAdd}
-              disabled={isLoading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
-            >
-              {isLoading ? <Loader2 className="animate-spin" size={18} /> : <UserPlus size={18} />}
-              Tambah Siswa
-            </button>
-          </div>
-        )}
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                <th className="px-6 py-4">No</th>
-                <th className="px-6 py-4">Nama Lengkap</th>
-                <th className="px-6 py-4">Jenis Kelamin</th>
-                {isAdmin && <th className="px-6 py-4 text-right">Aksi</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {filteredStudents.length === 0 ? (
-                <tr>
-                  <td colSpan={isAdmin ? 4 : 3} className="px-6 py-10 text-center text-slate-400">
-                    <p>Tidak ada data siswa ditemukan.</p>
-                  </td>
-                </tr>
-              ) : (
-                filteredStudents.map((s, idx) => (
-                  <tr key={s.id} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-6 py-4 text-slate-400 font-bold">{idx + 1}</td>
-                    <td className="px-6 py-4 font-medium text-slate-700">
-                      <div className="flex items-center gap-3">
-                        <img 
-                            src={getAvatar(s.name, s.gender)} 
-                            className="w-10 h-10 rounded-full bg-slate-50 border-2 border-white shadow-sm hover:scale-110 transition-transform" 
-                            alt="" 
-                        />
-                        {s.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${s.gender === 'L' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'}`}>
-                        {s.gender === 'L' ? 'Laki-laki' : 'Perempuan'}
-                      </span>
-                    </td>
-                    {isAdmin && (
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                           <button 
-                            onClick={() => openEditModal(s)}
-                            className="p-2 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                            title="Edit Data"
-                          >
-                            <Pencil size={18} />
-                          </button>
-                          <button 
-                            onClick={() => initiateDelete(s.id)}
-                            className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                            title="Hapus Data"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* EDIT MODAL */}
-      {editingStudent && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-           <div className="bg-white w-full max-w-md rounded-3xl p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-slate-800">Edit Data Siswa</h3>
-                <button onClick={() => setEditingStudent(null)} className="p-2 text-slate-400 hover:text-rose-500 rounded-full hover:bg-rose-50 transition-all">
-                  <X size={20} />
+      {/* ADMIN ADD FORM */}
+      {isAdmin && (
+          <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+             <h3 className="font-bold text-sm text-slate-600">Tambah Siswa Baru</h3>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input 
+                  value={newName} 
+                  onChange={e => setNewName(e.target.value)} 
+                  placeholder="Nama Lengkap" 
+                  className="px-4 py-3 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-200"
+                />
+                <input 
+                  value={newNickname} 
+                  onChange={e => setNewNickname(e.target.value)} 
+                  placeholder="Username Login" 
+                  className="px-4 py-3 bg-slate-50 rounded-xl border-none focus:ring-2 focus:ring-emerald-200"
+                />
+                <button onClick={handleAdd} disabled={isLoading} className="bg-emerald-600 text-white rounded-xl font-bold py-3 flex items-center justify-center gap-2 hover:bg-emerald-700 transition-colors">
+                    {isLoading ? <Loader2 className="animate-spin" /> : <UserPlus size={18} />} Tambah
                 </button>
-              </div>
-
-              <div className="space-y-4">
-                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Nama Siswa</label>
-                    <input 
-                      type="text" 
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white text-slate-800 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500"
-                    />
-                 </div>
-                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Jenis Kelamin</label>
-                    <div className="flex gap-4">
-                       <label className={`flex-1 cursor-pointer border-2 rounded-2xl p-3 flex items-center justify-center gap-2 transition-all ${editGender === 'L' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-100 text-slate-400 hover:border-blue-200'}`}>
-                          <input type="radio" name="gender" className="hidden" checked={editGender === 'L'} onChange={() => setEditGender('L')} />
-                          <span className="font-bold">Laki-laki</span>
-                       </label>
-                       <label className={`flex-1 cursor-pointer border-2 rounded-2xl p-3 flex items-center justify-center gap-2 transition-all ${editGender === 'P' ? 'border-pink-500 bg-pink-50 text-pink-700' : 'border-slate-100 text-slate-400 hover:border-pink-200'}`}>
-                          <input type="radio" name="gender" className="hidden" checked={editGender === 'P'} onChange={() => setEditGender('P')} />
-                          <span className="font-bold">Perempuan</span>
-                       </label>
-                    </div>
-                 </div>
-                 
-                 <div className="flex items-center gap-3 pt-4">
-                    <img src={getAvatar(editName || 'Preview', editGender)} alt="Preview" className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200" />
-                    <div className="text-xs text-slate-400">
-                       Preview Avatar <br/>
-                       <span className="font-bold text-slate-600">{editGender === 'L' ? 'Gaya Laki-laki' : 'Gaya Perempuan'}</span>
-                    </div>
-                 </div>
-
-                 <button 
-                  onClick={handleSaveEdit}
-                  disabled={isLoading}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-100 mt-2 disabled:opacity-50"
-                 >
-                   {isLoading ? <Loader2 className="animate-spin" size={18}/> : <Save size={18} />}
-                   Simpan Perubahan
-                 </button>
-              </div>
-           </div>
-        </div>
+             </div>
+          </div>
       )}
 
-      {/* DELETE MODAL */}
+      {/* STUDENT LIST */}
+      <div className="space-y-3">
+        {filteredStudents.map((s, idx) => (
+            <div 
+                key={s.id} 
+                onClick={() => (isAdmin || isTeacher) && setViewingStudent(s)}
+                className={`bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between shadow-sm transition-all ${isAdmin || isTeacher ? 'cursor-pointer hover:border-emerald-300 hover:shadow-md' : ''}`}
+            >
+                <div className="flex items-center gap-4">
+                    <span className="text-xs font-bold text-slate-300 w-4">{idx + 1}</span>
+                    <img src={getAvatar(s)} className="w-10 h-10 rounded-full bg-slate-100 object-cover" />
+                    <div>
+                        <h4 className="font-bold text-slate-800 text-sm">{s.name}</h4>
+                        <div className="flex items-center gap-2">
+                            {s.nickname && (
+                                <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-500">
+                                    @{s.nickname}
+                                </span>
+                            )}
+                            {s.gender === 'L' ? (
+                                <span className="text-[10px] text-blue-500 font-bold">Laki-laki</span>
+                            ) : (
+                                <span className="text-[10px] text-pink-500 font-bold">Perempuan</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                
+                {/* ACTIONS */}
+                <div className="flex gap-2">
+                    {(isAdmin || isTeacher) && (
+                        <button 
+                            className={`p-2 rounded-lg ${isAdmin ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-500'}`}
+                            title="Lihat Detail Profil"
+                        >
+                            {isAdmin ? <Pencil size={16} /> : <Eye size={16} />}
+                        </button>
+                    )}
+                    {isAdmin && (
+                        <button onClick={(e) => initiateDelete(s.id, e)} className="p-2 bg-rose-50 text-rose-500 rounded-lg hover:bg-rose-100 transition-colors">
+                            <Trash2 size={16} />
+                        </button>
+                    )}
+                </div>
+            </div>
+        ))}
+      </div>
+
+      {/* PROFILE DETAIL MODAL */}
+      {viewingStudent && (
+          <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in fade-in duration-300">
+              <div className="bg-slate-50 w-full max-w-lg h-[90vh] sm:h-auto sm:max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-2xl overflow-y-auto animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300 relative">
+                  <div className="p-6">
+                      <StudentProfile 
+                          student={viewingStudent} 
+                          onUpdate={() => {
+                              onRefresh();
+                              // Jika update nama/data lain, update juga state viewingStudent agar UI modal berubah
+                              // Tapi karena props berubah dari parent (onRefresh -> fetchData -> students updated),
+                              // kita perlu mencari student yang sedang dilihat di list baru.
+                              // Namun untuk simplifikasi, tutup modal atau biarkan.
+                              // Idealnya: setViewingStudent(students.find(s => s.id === viewingStudent.id) || null)
+                          }}
+                          isModal={true}
+                          onClose={() => setViewingStudent(null)}
+                          readOnly={isTeacher} // Guru = ReadOnly, Admin = Full Access
+                      />
+                  </div>
+              </div>
+          </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
       {deletingStudentId && (
-        <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-           <div className="bg-white w-full max-w-sm rounded-[2rem] p-6 shadow-2xl scale-100 animate-in zoom-in-95 duration-200 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-2 bg-rose-500"></div>
-              
-              <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                <AlertTriangle size={32} />
-              </div>
-
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-slate-800 font-kids mb-2">Hapus Data Siswa?</h3>
-                <p className="text-slate-500 text-sm">
-                  Semua riwayat pembayaran siswa ini juga akan terhapus. Yakin?
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                 <button 
-                   onClick={() => setDeletingStudentId(null)}
-                   className="py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors"
-                 >
-                   Batal
-                 </button>
-                 <button 
-                   onClick={confirmDelete}
-                   disabled={isLoading}
-                   className="py-3 rounded-xl font-bold text-white bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-200 transition-all active:scale-95 flex items-center justify-center gap-2"
-                 >
-                   {isLoading ? <Loader2 className="animate-spin" size={18} /> : 'Ya, Hapus'}
-                 </button>
-              </div>
-           </div>
+        <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6 animate-in fade-in">
+            <div className="bg-white w-full max-w-xs rounded-[2rem] p-6 text-center shadow-xl scale-100 animate-in zoom-in-95">
+                <h3 className="font-bold text-lg mb-2">Hapus Siswa?</h3>
+                <p className="text-slate-500 text-sm mb-6">Semua data transaksi siswa ini juga akan terhapus.</p>
+                <div className="flex gap-3">
+                    <button onClick={() => setDeletingStudentId(null)} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold text-slate-600">Batal</button>
+                    <button onClick={confirmDelete} className="flex-1 py-3 bg-rose-500 rounded-xl font-bold text-white hover:bg-rose-600">Hapus</button>
+                </div>
+            </div>
         </div>
       )}
     </div>

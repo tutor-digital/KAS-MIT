@@ -1,12 +1,11 @@
 import { supabase } from '../lib/supabaseClient';
 import { Student, Transaction } from '../types';
 
-// Utility untuk generate ID yang aman di berbagai browser/environment
+// Utility untuk generate ID
 export const generateUUID = () => {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  // Fallback untuk environment yang tidak support crypto.randomUUID (misal HTTP)
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
     var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -26,12 +25,18 @@ export const getStudents = async (): Promise<Student[]> => {
     return [];
   }
   
-  // Mapping snake_case (DB) to camelCase (App)
   return data.map((s: any) => ({
     id: s.id,
     name: s.name,
     gender: s.gender,
-    absentNumber: s.absent_number
+    absentNumber: s.absent_number,
+    // Mapping field baru
+    nickname: s.nickname,
+    password: s.password,
+    birthDate: s.birth_date,
+    weight: s.weight,
+    height: s.height,
+    photoUrl: s.photo_url
   }));
 };
 
@@ -40,7 +45,13 @@ export const addStudent = async (student: Student) => {
     id: student.id,
     name: student.name,
     gender: student.gender,
-    absent_number: student.absentNumber
+    absent_number: student.absentNumber,
+    nickname: student.nickname,
+    password: student.password || '123456',
+    birth_date: student.birthDate,
+    weight: student.weight,
+    height: student.height,
+    photo_url: student.photoUrl
   });
   if (error) throw error;
 };
@@ -49,18 +60,21 @@ export const updateStudent = async (student: Student) => {
   const { error } = await supabase.from('students').update({
     name: student.name,
     gender: student.gender,
-    absent_number: student.absentNumber
+    absent_number: student.absentNumber,
+    nickname: student.nickname,
+    password: student.password,
+    birth_date: student.birthDate,
+    weight: student.weight,
+    height: student.height,
+    photo_url: student.photoUrl
   }).eq('id', student.id);
   if (error) throw error;
 };
 
 export const deleteStudent = async (id: string) => {
-  // FIX: Hapus dulu transaksi yang berhubungan dengan siswa ini (Manual Cascade)
-  // Ini penting karena database biasanya menolak hapus siswa jika masih ada data transaksinya
   const { error: transError } = await supabase.from('transactions').delete().eq('student_id', id);
   if (transError) throw transError;
 
-  // Setelah data transaksi bersih, baru hapus data siswanya
   const { error } = await supabase.from('students').delete().eq('id', id);
   if (error) throw error;
 };
